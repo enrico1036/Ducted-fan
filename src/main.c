@@ -303,16 +303,6 @@ void Callback_20ms() {
 //	lcd_buffer_print(LCD_LINE5, "Mot: %4.0f", desiredState.key.avg_motor_us);
 //	//lcd_buffer_print(LCD_LINE7, "Diff: %3.0f", desiredState.key.motor_diff_us);
 
-	Get_Gyro_Rates(&currentState.key.gyro.vel.x, &currentState.key.gyro.vel.y, &currentState.key.gyro.vel.z);
-	Get_Accel_Angles(&currentState.key.accel.pos.x, &currentState.key.accel.pos.y);
-	Get_Mag_Value_Normalized(&currentState.key.magn.pos.x, &currentState.key.magn.pos.y, &currentState.key.magn.pos.z);
-
-	get_Angle_AHRS(currentState.key.gyro.vel.x, currentState.key.gyro.vel.y, currentState.key.gyro.vel.z, currentState.key.accel.pos.x, currentState.key.accel.pos.y, currentState.key.accel.pos.z,			currentState.key.magn.pos.x, currentState.key.magn.pos.y, currentState.key.magn.pos.z, &currentState.key.Kalman.acc.x, &currentState.key.Kalman.acc.y, &currentState.key.Kalman.acc.z);
-
-
-	 currentState.key.Kalman.pos.x = getAngle(currentState.key.accel.pos.x, currentState.key.gyro.vel.x, 0.02, rollKalman);
-	 currentState.key.Kalman.pos.y = getAngle(currentState.key.accel.pos.y, currentState.key.gyro.vel.y, 0.02, pitchKalman);
-	 currentState.key.Kalman.pos.z = currentState.key.Kalman.acc.z;
 
 //	 desiredState.key.x_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.x, 0, &Roll_PID), -30, 30, 60, 120);
 //	 desiredState.key.y_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.y, 0, &Pitch_PID), -30, 30, 60, 120);
@@ -327,11 +317,21 @@ void Callback_50ms() {
 }
 
 void Callback_100ms() {
-	lcd_buffer_flush();
+	Get_Gyro_Rates(&currentState.key.gyro.vel.x, &currentState.key.gyro.vel.y, &currentState.key.gyro.vel.z);
+	Get_Accel_Angles(&currentState.key.accel.pos.x, &currentState.key.accel.pos.y);
+	Get_Mag_Value_Normalized(&currentState.key.magn.pos.x, &currentState.key.magn.pos.y, &currentState.key.magn.pos.z);
+
+	get_Angle_AHRS(currentState.key.gyro.vel.x, currentState.key.gyro.vel.y, currentState.key.gyro.vel.z, currentState.key.accel.pos.x, currentState.key.accel.pos.y, currentState.key.accel.pos.z,			currentState.key.magn.pos.x, currentState.key.magn.pos.y, currentState.key.magn.pos.z, &currentState.key.Kalman.acc.x, &currentState.key.Kalman.acc.y, &currentState.key.Kalman.acc.z);
+
+
+	currentState.key.Kalman.pos.x = getAngle(currentState.key.accel.pos.x, currentState.key.gyro.vel.x, 0.1, rollKalman);
+	currentState.key.Kalman.pos.y = getAngle(currentState.key.accel.pos.y, currentState.key.gyro.vel.y, 0.1, pitchKalman);
+	currentState.key.Kalman.pos.z = currentState.key.Kalman.acc.z;
+
 }
 
 void Callback_500ms() {
-
+	lcd_buffer_flush();
 }
 
 void Callback_1000ms() {
