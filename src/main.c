@@ -63,11 +63,7 @@
 #include <machine.h>
 #include "platform.h"
 #include "s12adc.h"
-#include "Ducted_Drivers/Motor.h"
-#include "Ducted_Drivers/Servo.h"
 #include "Ducted_Drivers/map.h"
-#include "Ducted_Drivers/PID.h"
-#include "Ducted_Drivers/Sonar.h"
 #include "LowLevelDrivers/CMT.h"
 #include "I2C.h"
 #include "Ducted_Drivers/lcd_buffer.h"
@@ -132,22 +128,22 @@ extern KALMAN *rollKalman;
 extern struct timerClocks timers;
 
 /* Create PID structure used for PID properties */
-PID_config z_axis_PID;
-PID_config Pitch_PID;
-PID_config Roll_PID;
+//PID_config z_axis_PID;
+//PID_config Pitch_PID;
+//PID_config Roll_PID;
 
-float outValue;
+//float outValue;
 
 /*Stores result of analogRead mapping */
 uint16_t result;
 /*Stores the value read from analog input  */
 uint16_t analogRead;
 
-unsigned int prev_time = 0;
+// unsigned int prev_time = 0;
 
-const float dt = 0.005;
+// const float dt = 0.005;
 
-float value;
+// float value;
 
 /*******************************************************************************
  * Function name: main
@@ -198,13 +194,13 @@ void main(void) {
 			}
 		}
 
-		//result = map(analogRead, 0, 4095, 1000, 2200);
-		Motor_Write_us(MOTOR_UPPER, desiredState.key.avg_motor_us + desiredState.key.motor_diff_us);
-		Motor_Write_us(MOTOR_BOTTOM, desiredState.key.avg_motor_us - desiredState.key.motor_diff_us);
-
-		//result = map(analogRead, 0, 4095, 60, 120);
-		Servo_Write_deg(1, desiredState.key.x_servo_deg + 18); //18° is the trim of the servo
-		Servo_Write_deg(2, desiredState.key.y_servo_deg);
+//		//result = map(analogRead, 0, 4095, 1000, 2200);
+//		Motor_Write_us(MOTOR_UPPER, desiredState.key.avg_motor_us + desiredState.key.motor_diff_us);
+//		Motor_Write_us(MOTOR_BOTTOM, desiredState.key.avg_motor_us - desiredState.key.motor_diff_us);
+//
+//		//result = map(analogRead, 0, 4095, 60, 120);
+//		Servo_Write_deg(1, desiredState.key.x_servo_deg + 18); //18° is the trim of the servo
+//		Servo_Write_deg(2, desiredState.key.y_servo_deg);
 	}
 
 } /* End function main() */
@@ -220,18 +216,18 @@ void Setup() {
 
 	lcd_buffer_print(LCD_LINE2, "    TEST   ");
 
-	/* Initialize sonar */
-	sonarInitialize(); //must be initialized before IIC, otherwise it will not work
-	/* Initialize motors */
-	Motors_Init();
-	/* Turn on motors relay */
-	Motors_On();
-	/* Send arm signal to motors */
-	Motor_Arm(MOTOR_UPPER);
-	Motor_Arm(MOTOR_BOTTOM);
-
-	/* Initialize servos */
-	Servos_Init();
+//	/* Initialize sonar */
+//	sonarInitialize(); //must be initialized before IIC, otherwise it will not work
+//	/* Initialize motors */
+//	Motors_Init();
+//	/* Turn on motors relay */
+//	Motors_On();
+//	/* Send arm signal to motors */
+//	Motor_Arm(MOTOR_UPPER);
+//	Motor_Arm(MOTOR_BOTTOM);
+//
+//	/* Initialize servos */
+//	Servos_Init();
 
 	/* Initialize I2C with control */
 	riic_ret_t iic_ret = RIIC_OK;
@@ -246,10 +242,10 @@ void Setup() {
 	/* Setup Compare Match Timer */
 	CMT_init();
 
-	/* Initialize PID structure used for PID properties */
-	PID_Init(&z_axis_PID, 0.7, 0.05, 0.15, 0.02, 0, 0.5);
-	PID_Init(&Pitch_PID, 0.7, 7, 0, 0.02, -30, 30);
-	PID_Init(&Roll_PID, 0.7, 7, 0, 0.02, -30, 30);
+//	/* Initialize PID structure used for PID properties */
+//	PID_Init(&z_axis_PID, 0.7, 0.05, 0.15, 0.02, 0, 0.5);
+//	PID_Init(&Pitch_PID, 0.7, 7, 0, 0.02, -30, 30);
+//	PID_Init(&Roll_PID, 0.7, 7, 0, 0.02, -30, 30);
 
 	/* Make the port connected to SW1 an input */
 	PORT4.PDR.BIT.B0 = 0;
@@ -261,17 +257,17 @@ void Setup() {
 
 	//MS5611-01BA01 init
 //    MS5611_Init();
-
-	desiredState.key.motor_diff_us = 0;
-	desiredState.key.abs.pos.z = 0.15;
-	value = 150;
+//
+//	desiredState.key.motor_diff_us = 0;
+//	desiredState.key.abs.pos.z = 0.15;
+//	value = 150;
 
 }
 void Callback_1ms() {
-	if (sonarGetState() == SONAR_TRIGGER) {
-		sonarTriggerStop();
-		sonarEchoCountStart();
-	}
+//	if (sonarGetState() == SONAR_TRIGGER) {
+//		sonarTriggerStop();
+//		sonarEchoCountStart();
+//	}
 
 	/* Start the A/D converter */
 	S12ADC_start();
@@ -290,45 +286,44 @@ void Callback_10ms() {
 
 }
 
-static double sonarDistance = 0;
+// static double sonarDistance = 0;
 
 void Callback_20ms() {
 	//char a[20];
 	//sprintf(a, "D: %4.3f", sonarGetDistance());
 
-	desiredState.key.abs.pos.z = value / 1000.0;
-	sonarDistance = sonarGetDistance();
-	lcd_buffer_print(LCD_LINE4, "In: %1.3f", sonarDistance);
-	outValue = PID_Compute(sonarDistance, desiredState.key.abs.pos.z, &z_axis_PID);
-	//lcd_buffer_print(LCD_LINE5, "Out: %4.2f", outValue);
-	//decomment to use PID
-	desiredState.key.avg_motor_us = map(outValue * map(analogRead, 0, 4096, 0, 1), 0, 0.5, MOTOR_MIN_US, MOTOR_MAX_US);
-	//desiredState.key.avg_motor_us = map(analogRead, 0, 4096, 1000, 2000);
-	lcd_buffer_print(LCD_LINE5, "Mot: %4.0f", desiredState.key.avg_motor_us);
-	//lcd_buffer_print(LCD_LINE7, "Diff: %3.0f", desiredState.key.motor_diff_us);
+//	desiredState.key.abs.pos.z = value / 1000.0;
+//	sonarDistance = sonarGetDistance();
+//	lcd_buffer_print(LCD_LINE4, "In: %1.3f", sonarDistance);
+//	outValue = PID_Compute(sonarDistance, desiredState.key.abs.pos.z, &z_axis_PID);
+//	//lcd_buffer_print(LCD_LINE5, "Out: %4.2f", outValue);
+//	//decomment to use PID
+//	desiredState.key.avg_motor_us = map(outValue * map(analogRead, 0, 4096, 0, 1), 0, 0.5, MOTOR_MIN_US, MOTOR_MAX_US);
+//	//desiredState.key.avg_motor_us = map(analogRead, 0, 4096, 1000, 2000);
+//	lcd_buffer_print(LCD_LINE5, "Mot: %4.0f", desiredState.key.avg_motor_us);
+//	//lcd_buffer_print(LCD_LINE7, "Diff: %3.0f", desiredState.key.motor_diff_us);
 
 	Get_Gyro_Rates(&currentState.key.gyro.vel.x, &currentState.key.gyro.vel.y, &currentState.key.gyro.vel.z);
 	Get_Accel_Angles(&currentState.key.accel.pos.x, &currentState.key.accel.pos.y);
 	Get_Mag_Value_Normalized(&currentState.key.magn.pos.x, &currentState.key.magn.pos.y, &currentState.key.magn.pos.z);
 
-//	get_Angle_AHRS(currentState.key.gyro.vel.x, currentState.key.gyro.vel.y, currentState.key.gyro.vel.z, currentState.key.accel.pos.x, currentState.key.accel.pos.y, currentState.key.accel.pos.z,
-//			currentState.key.magn.pos.x, currentState.key.magn.pos.y, currentState.key.magn.pos.z, &currentState.key.Kalman.pos.x, &currentState.key.Kalman.pos.y, &currentState.key.Kalman.pos.z);
+	get_Angle_AHRS(currentState.key.gyro.vel.x, currentState.key.gyro.vel.y, currentState.key.gyro.vel.z, currentState.key.accel.pos.x, currentState.key.accel.pos.y, currentState.key.accel.pos.z,			currentState.key.magn.pos.x, currentState.key.magn.pos.y, currentState.key.magn.pos.z, &currentState.key.Kalman.acc.x, &currentState.key.Kalman.acc.y, &currentState.key.Kalman.acc.z);
 
 
-	 currentState.key.Kalman.pos.x = getAngle(currentState.key.accel.pos.x, currentState.key.gyro.vel.x, dt, rollKalman);
-	 currentState.key.Kalman.pos.y = getAngle(currentState.key.accel.pos.y, currentState.key.gyro.vel.y, dt, pitchKalman);
-	 currentState.key.Kalman.pos.z = currentState.key.gyro.vel.z;
+	 currentState.key.Kalman.pos.x = getAngle(currentState.key.accel.pos.x, currentState.key.gyro.vel.x, 0.02, rollKalman);
+	 currentState.key.Kalman.pos.y = getAngle(currentState.key.accel.pos.y, currentState.key.gyro.vel.y, 0.02, pitchKalman);
+	 currentState.key.Kalman.pos.z = currentState.key.Kalman.acc.z;
 
-	 desiredState.key.x_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.x, 0, &Roll_PID), -30, 30, 60, 120);
-	 desiredState.key.y_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.y, 0, &Pitch_PID), -30, 30, 60, 120);
+//	 desiredState.key.x_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.x, 0, &Roll_PID), -30, 30, 60, 120);
+//	 desiredState.key.y_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.y, 0, &Pitch_PID), -30, 30, 60, 120);
 
 }
 
 void Callback_50ms() {
-	if (sonarGetState() == SONAR_IDLE)
-		sonarTriggerStart();
-	else if (sonarGetState() == SONAR_ECHO)
-		sonarEchoCountStop();
+//	if (sonarGetState() == SONAR_IDLE)
+//		sonarTriggerStart();
+//	else if (sonarGetState() == SONAR_ECHO)
+//		sonarEchoCountStop();
 }
 
 void Callback_100ms() {
