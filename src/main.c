@@ -311,12 +311,14 @@ void Callback_20ms() {
 	Get_Accel_Angles(&currentState.key.accel.pos.x, &currentState.key.accel.pos.y);
 	Get_Mag_Value_Normalized(&currentState.key.magn.pos.x, &currentState.key.magn.pos.y, &currentState.key.magn.pos.z);
 
-//	get_Angle_AHRS(currentState.key.gyro.vel.x, currentState.key.gyro.vel.y, currentState.key.gyro.vel.z, currentState.key.accel.pos.x, currentState.key.accel.pos.y, currentState.key.accel.pos.z,
-//			currentState.key.magn.pos.x, currentState.key.magn.pos.y, currentState.key.magn.pos.z, &currentState.key.Kalman.pos.x, &currentState.key.Kalman.pos.y, &currentState.key.Kalman.pos.z);
+	// get_Angle_AHRS(currentState.key.gyro.vel.x, currentState.key.gyro.vel.y, currentState.key.gyro.vel.z, currentState.key.accel.pos.x, currentState.key.accel.pos.y, currentState.key.accel.pos.z, currentState.key.magn.pos.x, currentState.key.magn.pos.y, currentState.key.magn.pos.z, &currentState.key.Kalman.acc.x, &currentState.key.Kalman.acc.y, &currentState.key.Kalman.acc.z);
 
+	// Calcolo Roll e Pitch con il filtro di Kalman
+	 currentState.key.Kalman.pos.x = getAngle(currentState.key.accel.pos.x, currentState.key.gyro.vel.x, 0.02, rollKalman);
+	 currentState.key.Kalman.pos.y = getAngle(currentState.key.accel.pos.y, currentState.key.gyro.vel.y, 0.02, pitchKalman);
+	//  currentState.key.Kalman.pos.z = currentState.key.Kalman.acc.z;
 
-	 currentState.key.Kalman.pos.x = getAngle(currentState.key.accel.pos.x, currentState.key.gyro.vel.x, dt, rollKalman);
-	 currentState.key.Kalman.pos.y = getAngle(currentState.key.accel.pos.y, currentState.key.gyro.vel.y, dt, pitchKalman);
+	// Angolo di Jaw mediante giroscopio
 	 currentState.key.Kalman.pos.z = currentState.key.gyro.vel.z;
 
 	 desiredState.key.x_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.x, 0, &Roll_PID), -30, 30, 60, 120);
