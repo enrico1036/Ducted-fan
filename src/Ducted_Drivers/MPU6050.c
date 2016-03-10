@@ -304,6 +304,11 @@ void Get_Accel_Angles(float* ACCEL_XANGLE, float* ACCEL_YANGLE)
 
 	Get_Accel_Values(&ACCEL_XOUT, &ACCEL_YOUT, &ACCEL_ZOUT);
 
+	if(C2toD(ACCEL_YOUT) == 0 && C2toD(ACCEL_ZOUT) == 0)
+		return;
+	if(C2toD(ACCEL_XOUT) == 0 && sqrt(pow((float)C2toD(ACCEL_YOUT),2)+pow((float)C2toD(ACCEL_ZOUT),2)))
+		return;
+
 //	*ACCEL_XANGLE = 57.295*atan((float)C2toD(ACCEL_YOUT)/sqrt(pow((float)C2toD(ACCEL_ZOUT),2)+pow((float)C2toD(ACCEL_XOUT),2)));
 //	*ACCEL_YANGLE = 57.295*atan((float)-C2toD(ACCEL_XOUT)/sqrt(pow((float)C2toD(ACCEL_ZOUT),2)+pow((float)C2toD(ACCEL_YOUT),2)));
 	*ACCEL_XANGLE = 57.295*atan2(-(float)C2toD(ACCEL_YOUT), (float)C2toD(ACCEL_ZOUT));
