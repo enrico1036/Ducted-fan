@@ -14,15 +14,13 @@
 /* -----------------------------------------------------------------------------------------------------
  * Description:	2 channels servo driver.
  * 				Default used timer channel is MTU4 with a PWM period of 20ms
- * 				This driver uses an automatic generated (by Renesas PDG2-"Peripheral Driver Generator 2")
- * 					low-level driver to interact with board peripherals
  *
  * Usage: 	-Servos are assigned to the port PE2 (channel 1) and PE1 (channel 2)
  * 				respectively on board pin JN2-23 and JN2-22
  *  ----------------------------------------------------------------------------------------------------- */
 
-#define SERVO_PITCH 1	//TODO: it could be moved on the upper-level servo control driver
-#define SERVO_ROLL 2	//TODO: it could be moved on the upper-level servo control driver
+#define SERVO_PITCH 1
+#define SERVO_ROLL 2
 #define SERVO_PWM_SIGNAL_PERIOD_US 20000.00	//20ms
 #define SERVO_MIN_US 700	//TODO: look for the right value
 #define SERVO_MAX_US 2400	//TODO: look for the right value
@@ -30,6 +28,9 @@
 #define SERVO_MAX_DEG 180
 #define SERVO_MIN_BOUND_DEG 60 	// servo minimum physical limit
 #define SERVO_MAX_BOUND_DEG 120	// servo maximum physical limit
+
+#define SERVO_PITCH_TRIM 18;	// pitch servo offset in deg
+#define SERVO_ROLL_TRIM 0;	// roll servo offset in deg
 
 void Servos_Init();
 void Servo_Write_PWM(int channel, float value);

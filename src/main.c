@@ -145,8 +145,6 @@ uint16_t analogRead;
 
 unsigned int prev_time = 0;
 
-const float dt = 0.005;
-
 float value;
 
 /*******************************************************************************
@@ -197,14 +195,6 @@ void main(void) {
 				}
 			}
 		}
-
-		//result = map(analogRead, 0, 4095, 1000, 2200);
-		Motor_Write_us(MOTOR_UPPER, desiredState.key.avg_motor_us + desiredState.key.motor_diff_us);
-		Motor_Write_us(MOTOR_BOTTOM, desiredState.key.avg_motor_us - desiredState.key.motor_diff_us);
-
-		//result = map(analogRead, 0, 4095, 60, 120);
-		Servo_Write_deg(1, desiredState.key.x_servo_deg + 18); //18° is the trim of the servo
-		Servo_Write_deg(2, desiredState.key.y_servo_deg);
 	}
 
 } /* End function main() */
@@ -218,7 +208,7 @@ void Setup() {
 
 	/* Display message on LCD */
 
-	lcd_buffer_print(LCD_LINE2, "    TEST   ");
+	lcd_buffer_print(LCD_LINE1, "    TEST   ");
 
 	/* Initialize sonar */
 	sonarInitialize(); //must be initialized before IIC, otherwise it will not work
@@ -248,8 +238,8 @@ void Setup() {
 
 	/* Initialize PID structure used for PID properties */
 	PID_Init(&z_axis_PID, 0.7, 0.05, 0.15, 0.02, 0, 0.5);
-	PID_Init(&Pitch_PID, 0.7, 7, 0, 0.02, -30, 30);
-	PID_Init(&Roll_PID, 0.7, 7, 0, 0.02, -30, 30);
+	PID_Init(&Pitch_PID, 0.7, 0, 0, 0.02, -30, 30);
+	PID_Init(&Roll_PID, 0.7, 0, 0, 0.02, -30, 30);
 
 	/* Make the port connected to SW1 an input */
 	PORT4.PDR.BIT.B0 = 0;
@@ -258,6 +248,7 @@ void Setup() {
 	MPU6050_Test_I2C();
 	Setup_MPU6050();
 	Calibrate_Gyros();
+	init_Kalman();
 
 	//MS5611-01BA01 init
 //    MS5611_Init();
@@ -298,32 +289,40 @@ void Callback_20ms() {
 
 	desiredState.key.abs.pos.z = value / 1000.0;
 	sonarDistance = sonarGetDistance();
-	lcd_buffer_print(LCD_LINE4, "In: %1.3f", sonarDistance);
+	//lcd_buffer_print(LCD_LINE4, "In: %1.3f", sonarDistance);
 	outValue = PID_Compute(sonarDistance, desiredState.key.abs.pos.z, &z_axis_PID);
 	//lcd_buffer_print(LCD_LINE5, "Out: %4.2f", outValue);
 	//decomment to use PID
 	desiredState.key.avg_motor_us = map(outValue * map(analogRead, 0, 4096, 0, 1), 0, 0.5, MOTOR_MIN_US, MOTOR_MAX_US);
 	//desiredState.key.avg_motor_us = map(analogRead, 0, 4096, 1000, 2000);
-	lcd_buffer_print(LCD_LINE5, "Mot: %4.0f", desiredState.key.avg_motor_us);
+	//lcd_buffer_print(LCD_LINE5, "Mot: %4.0f", desiredState.key.avg_motor_us);
 	//lcd_buffer_print(LCD_LINE7, "Diff: %3.0f", desiredState.key.motor_diff_us);
 
 	Get_Gyro_Rates(&currentState.key.gyro.vel.x, &currentState.key.gyro.vel.y, &currentState.key.gyro.vel.z);
 	Get_Accel_Angles(&currentState.key.accel.pos.x, &currentState.key.accel.pos.y);
-	Get_Mag_Value_Normalized(&currentState.key.magn.pos.x, &currentState.key.magn.pos.y, &currentState.key.magn.pos.z);
+	// Get_Mag_Value_Normalized(&currentState.key.magn.pos.x, &currentState.key.magn.pos.y, &currentState.key.magn.pos.z);
 
 	// get_Angle_AHRS(currentState.key.gyro.vel.x, currentState.key.gyro.vel.y, currentState.key.gyro.vel.z, currentState.key.accel.pos.x, currentState.key.accel.pos.y, currentState.key.accel.pos.z, currentState.key.magn.pos.x, currentState.key.magn.pos.y, currentState.key.magn.pos.z, &currentState.key.Kalman.acc.x, &currentState.key.Kalman.acc.y, &currentState.key.Kalman.acc.z);
 
 	// Calcolo Roll e Pitch con il filtro di Kalman
-	 currentState.key.Kalman.pos.x = getAngle(currentState.key.accel.pos.x, currentState.key.gyro.vel.x, 0.02, rollKalman);
-	 currentState.key.Kalman.pos.y = getAngle(currentState.key.accel.pos.y, currentState.key.gyro.vel.y, 0.02, pitchKalman);
+	currentState.key.Kalman.pos.x = getAngle(currentState.key.accel.pos.x, currentState.key.gyro.vel.x, 0.02, rollKalman);
+	currentState.key.Kalman.pos.y = getAngle(currentState.key.accel.pos.y, currentState.key.gyro.vel.y, 0.02, pitchKalman);
 	//  currentState.key.Kalman.pos.z = currentState.key.Kalman.acc.z;
 
 	// Angolo di Jaw mediante giroscopio
-	 currentState.key.Kalman.pos.z = currentState.key.gyro.vel.z;
+	currentState.key.Kalman.pos.z = currentState.key.gyro.vel.z;
 
-	 desiredState.key.x_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.x, 0, &Roll_PID), -30, 30, 60, 120);
-	 desiredState.key.y_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.y, 0, &Pitch_PID), -30, 30, 60, 120);
+	desiredState.key.x_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.x, 0, &Roll_PID), -30, 30, 60, 120);
+	desiredState.key.y_servo_deg = map(PID_Compute(currentState.key.Kalman.pos.y, 0, &Pitch_PID), -30, 30, 60, 120);
 
+	lcd_buffer_print(LCD_LINE3, "srvX: %4.2f", desiredState.key.x_servo_deg);
+	lcd_buffer_print(LCD_LINE4, "srvY: %4.2f", desiredState.key.y_servo_deg);
+
+	Motor_Write_us(MOTOR_UPPER, desiredState.key.avg_motor_us + desiredState.key.motor_diff_us);
+	Motor_Write_us(MOTOR_BOTTOM, desiredState.key.avg_motor_us - desiredState.key.motor_diff_us);
+
+	Servo_Write_deg(SERVO_PITCH, desiredState.key.x_servo_deg); // pitch servo is trimmed 18°
+	Servo_Write_deg(SERVO_ROLL, desiredState.key.y_servo_deg);
 }
 
 void Callback_50ms() {
@@ -334,11 +333,11 @@ void Callback_50ms() {
 }
 
 void Callback_100ms() {
-	lcd_buffer_flush();
+
 }
 
 void Callback_500ms() {
-
+	lcd_buffer_flush();
 }
 
 void Callback_1000ms() {

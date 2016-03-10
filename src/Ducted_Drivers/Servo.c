@@ -55,7 +55,15 @@ void Servo_Write_deg(int channel, float deg)
 	if(deg < SERVO_MIN_BOUND_DEG) deg = SERVO_MIN_BOUND_DEG;
 	else if(deg > SERVO_MAX_BOUND_DEG) deg = SERVO_MAX_BOUND_DEG;
 
-	//Servo_Write_us(channel, (((SERVO_MAX_US-SERVO_MIN_US)/(SERVO_MAX_DEG-SERVO_MIN_DEG))*deg-SERVO_MIN_DEG)+SERVO_MIN_US);
+	switch(channel){
+	case SERVO_PITCH:
+		deg += SERVO_PITCH_TRIM;
+		break;
+	case SERVO_ROLL:
+		deg += SERVO_ROLL_TRIM;
+		break;
+	}
+
 	Servo_Write_us(channel, map(deg, SERVO_MIN_DEG, SERVO_MAX_DEG, SERVO_MIN_US, SERVO_MAX_US));
 }
 
